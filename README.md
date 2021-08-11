@@ -2,7 +2,7 @@
 
 ![logo image](https://github.com/Twela/textureshader-exporter/blob/main/images/txtshader.png?raw=true)
 
-A blender addon which exports shaders and textures into a p3xml file, which can be imported into the P3D editor
+A blender addon which exports textures and shaders into a p3xml file, which can be imported into the P3D editor
 
 **Requires Blender version 2.93**
 
