@@ -7,7 +7,7 @@ from .operators.export_p3xml import ExportShaderData
 
 bl_info = {
     "name": "Tay's P3DXML texture & Shader Exporter",
-    "author": "Tay",
+    "author": "Tay/Twela",
     "version": (0, 7, 0),
     "blender": (2, 93, 1),
     "wiki_url": "https://github.com/Twela/textureshader-exporter",
