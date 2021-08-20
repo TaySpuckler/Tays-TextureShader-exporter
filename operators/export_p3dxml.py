@@ -4,13 +4,12 @@ from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatVectorProperty
 from bpy.types import Operator
 
-def writeshaderp3dxml(shader,texture,filepath,light,filtermode):
+def writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader):
     #Updated from writing to file several times. Write to string instead and write the string to the file at the end :) 
     data = ""
-    data = data + '\n    <Chunk Type="0x11000">\n        <Value Name="Name" Value="'+str(shader)+'"/>'
-    data = data + """\n        <Value Name="Version" Value="0" />
-        <Value Name="PddiShaderName" Value="simple" />
-        <Value Name="HasTranslucency" Value="1" />
+    data = data + '\n    <Chunk Type="0x11000">\n        <Value Name="Name" Value="'+str(shader)+'"/>\n        <Value Name="Version" Value="0" />'
+    data = data + '\n        <Value Name="PddiShaderName" Value="'+str(pddishader)+'"/>'
+    data = data + """\n        <Value Name="HasTranslucency" Value="1" />
         <Value Name="VertexNeeds" Value="33" />
         <Value Name="VertexMask" Value="0xFFFC3FE1" />
         <Chunk Type="0x11002">"""
@@ -19,7 +18,7 @@ def writeshaderp3dxml(shader,texture,filepath,light,filtermode):
         </Chunk>
         <Chunk Type="0x11003">
             <!--1. "LIT" (Shader Integer Parameter)-->"""
-    data = data + '\n			<Value Name="Value" Value="'+str(light)+'" />'
+    data = data + '\n			<Value Name="Value" Value="'+str(light)+'"/>'
     data = data + """\n			<Value Name="Param" Value="LIT" />
         </Chunk>
         <Chunk Type="0x11003">
@@ -44,7 +43,7 @@ def writeshaderp3dxml(shader,texture,filepath,light,filtermode):
         </Chunk>
         <Chunk Type="0x11003">
             <!--6. "FIMD" (Shader Integer Parameter)-->"""
-    data = data + '\n			<Value Name="Value" Value="'+str(filtermode)+'" />'
+    data = data + '\n			<Value Name="Value" Value="'+str(filtermode)+'"/>'
     data = data + """\n			<Value Name="Param" Value="FIMD" />
         </Chunk>
         <Chunk Type="0x11003">
@@ -190,7 +189,7 @@ def writetexturep3dxml(texture,image,filepath):
     return
 
 
-def write_shader_data(context, filepath, selected, lighting, filtermode):
+def write_shader_data(context, filepath, selected, lighting, filtermode, pddishader):
     print("Exporting textures & shaders...")
     
     shader = ""
@@ -269,7 +268,7 @@ def write_shader_data(context, filepath, selected, lighting, filtermode):
                                         else:
                                             texture = ""
                                 shadlist.append(shader)
-                                writeshaderp3dxml(shader,texture,filepath,light,filtermode)
+                                writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader)
                             
     with open(filepath, 'a') as file:
         file.write("\n</Pure3DFile>")
@@ -297,20 +296,21 @@ class ExportShaderData(Operator, ExportHelper):
     name = 'PDDI Shader',
     description = 'Filter mode in p3d edtior.',
     items = (
-            ('0', 'error', ''),
-            ('1', 'simple', ''),
-            ('2', 'lightweight', ''),
-            ('3', 'lightmap', ''),
-            ('4', 'environment', ''),
-            ('5', 'spheremap', ''),
-            ('6', 'projtex', ''),
-            ('7', 'pointsprite', ''),
-            ('8', 'layered', ''),
-            ('9', 'layeredlmap', ''),
-            ('10', 'toon', ''),
-            ('11', 'hctune', '')),
-        default = '1'
+            ('error', 'error', ''),
+            ('simple', 'simple', ''),
+            ('lightweight', 'lightweight', ''),
+            ('lightmap', 'lightmap', ''),
+            ('environment', 'environment', ''),
+            ('spheremap', 'spheremap', ''),
+            ('projtex', 'projtex', ''),
+            ('pointsprite', 'pointsprite', ''),
+            ('layered', 'layered', ''),
+            ('layeredlmap', 'layeredlmap', ''),
+            ('toon', 'toon', ''),
+            ('hctune', 'hctune', '')),
+        default = 'simple'
     )
+    
 
     diffuse: FloatVectorProperty(  
         name="Diffuse",
@@ -319,7 +319,6 @@ class ExportShaderData(Operator, ExportHelper):
         min=0.0, max=1.0,
         description="Diffuse in the p3d editor. Only works with lighting enabled."
     )
-    
     blendmode: EnumProperty(
     name = 'Blend Mode',
     description = 'Blend mode in p3d edtior.',
@@ -351,13 +350,26 @@ class ExportShaderData(Operator, ExportHelper):
             ('1', 'Clamp', '')),
         default = '0'
     )
+
+    envmaptex: StringProperty(
+    name = 'Texture',
+    description = 'Envmap texture in p3d edtior.'
+    )
+
+    envmapcolour: FloatVectorProperty(  
+        name="Colour",
+        subtype='COLOR',
+        default=(1.0, 1.0, 1.0),
+        min=0.0, max=1.0,
+        description="Envmap colour in the p3d editor."
+    )
     
     lighting: BoolProperty(
         name="Lighting",
         description="Lighting option in the p3d editor.",
         default=False,
     )
-
+    
     alphatest: BoolProperty(
         name="Alpha Test",
         description="Alpha test option in the p3d editor.",
@@ -377,4 +389,28 @@ class ExportShaderData(Operator, ExportHelper):
     )
 
     def execute(self, context):
-        return write_shader_data(context, self.filepath, self.selected, self.lighting, self.filtermode)
+        return write_shader_data(context, self.filepath, self.selected, self.lighting, self.filtermode, self.pddishader)
+
+
+    def draw(self, context):
+        layout = self.layout
+        box = layout.box()
+        col = box.column_flow(align=False)
+            
+        col.prop(self, "pddishader")
+        col.prop(self, "diffuse")
+        col.prop(self, "blendmode")
+        col.prop(self, "filtermode")
+        col.prop(self, "uvmode")
+
+        envmapbox = col.box()
+        envmapboxcol = envmapbox.column_flow(align=False)
+        envmapboxcol.label(text="Enviroment Map")
+        envmapboxcol.prop(self,"envmaptex")
+        envmapboxcol.prop(self,"envmapcolour")
+        
+        col.prop(self, "lighting")
+        col.prop(self, "alphatest")
+        col.prop(self, "twosided")
+        col.prop(self, "selected")
+
