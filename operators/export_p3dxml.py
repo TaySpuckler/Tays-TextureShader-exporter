@@ -4,9 +4,10 @@ from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatVectorProperty
 from bpy.types import Operator
 
-def writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader):
+def writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader,blendmode,uvmode,diffuse):
     #Updated from writing to file several times. Write to string instead and write the string to the file at the end :) 
     data = ""
+    #data = data = '\n'+str(diffuse.r)
     data = data + '\n    <Chunk Type="0x11000">\n        <Value Name="Name" Value="'+str(shader)+'"/>\n        <Value Name="Version" Value="0" />'
     data = data + '\n        <Value Name="PddiShaderName" Value="'+str(pddishader)+'"/>'
     data = data + """\n        <Value Name="HasTranslucency" Value="1" />
@@ -47,9 +48,9 @@ def writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader):
     data = data + """\n			<Value Name="Param" Value="FIMD" />
         </Chunk>
         <Chunk Type="0x11003">
-            <!--7. "BLMD" (Shader Integer Parameter)-->
-            <Value Name="Value" Value="1" />
-            <Value Name="Param" Value="BLMD" />
+            <!--7. "BLMD" (Shader Integer Parameter)-->"""
+    data = data + '\n			<Value Name="Value" Value="'+str(blendmode)+'"/>'
+    data = data + """\n			<Value Name="Param" Value="BLMD" />
         </Chunk>
         <Chunk Type="0x11003">
             <!--8. "PLMD" (Shader Integer Parameter)-->
@@ -57,9 +58,9 @@ def writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader):
             <Value Name="Param" Value="PLMD" />
         </Chunk>
         <Chunk Type="0x11003">
-            <!--9. "UVMD" (Shader Integer Parameter)-->
-            <Value Name="Value" Value="0" />
-            <Value Name="Param" Value="UVMD" />
+            <!--9. "UVMD" (Shader Integer Parameter)-->"""
+    data = data + '\n			<Value Name="Value" Value="'+str(uvmode)+'"/>'
+    data = data + """\n			<Value Name="Param" Value="UVMD" />
         </Chunk>
         <Chunk Type="0x11003">
             <!--10. "CBVM" (Shader Integer Parameter)-->
@@ -127,9 +128,9 @@ def writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader):
             <Value Name="Param" Value="CBVC" />
         </Chunk>
         <Chunk Type="0x11005">
-            <!--23. "DIFF" (Shader Colour Parameter)-->
-            <Value Name="Value" Red="255" Green="255" Blue="255" />
-            <Value Name="Param" Value="DIFF" />
+            <!--23. "DIFF" (Shader Colour Parameter)-->"""
+    data = data + '\n			<Value Name="Value" Red="'+str(round(diffuse.r*255))+'" Green="'+str(round(diffuse.g*255))+'" Blue="'+str(round(diffuse.b*255))+'"/>'
+    data = data + """\n			<Value Name="Param" Value="DIFF" />
         </Chunk>
         <Chunk Type="0x11005">
             <!--24. "AMBI" (Shader Colour Parameter)-->
@@ -189,7 +190,7 @@ def writetexturep3dxml(texture,image,filepath):
     return
 
 
-def write_shader_data(context, filepath, selected, lighting, filtermode, pddishader):
+def write_shader_data(context, filepath, selected, lighting, filtermode, pddishader, blendmode, uvmode, diffuse):
     print("Exporting textures & shaders...")
     
     shader = ""
@@ -268,7 +269,7 @@ def write_shader_data(context, filepath, selected, lighting, filtermode, pddisha
                                         else:
                                             texture = ""
                                 shadlist.append(shader)
-                                writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader)
+                                writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader,blendmode,uvmode,diffuse)
                             
     with open(filepath, 'a') as file:
         file.write("\n</Pure3DFile>")
@@ -389,7 +390,7 @@ class ExportShaderData(Operator, ExportHelper):
     )
 
     def execute(self, context):
-        return write_shader_data(context, self.filepath, self.selected, self.lighting, self.filtermode, self.pddishader)
+        return write_shader_data(context, self.filepath, self.selected, self.lighting, self.filtermode, self.pddishader, self.blendmode, self.uvmode, self.diffuse)
 
 
     def draw(self, context):
@@ -414,3 +415,7 @@ class ExportShaderData(Operator, ExportHelper):
         col.prop(self, "twosided")
         col.prop(self, "selected")
 
+        if self.pddishader == "environment":
+            envmapbox.enabled = True
+        else:
+            envmapbox.enabled = False
