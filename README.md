@@ -17,7 +17,7 @@ I say requires. It's not been tested on anything lower. So just be keep that in 
 - Individual shader customzation
 
 ## Links
-[Blender 2.93](https://www.blender.org/download/releases/2-93/)
+[Blender](https://www.blender.org/)
 
 [Donutteam Forum page](https://donutteam.com/@Tay)
 
