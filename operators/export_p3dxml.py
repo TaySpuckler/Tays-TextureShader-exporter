@@ -1,10 +1,34 @@
 import bpy
 import base64
+import math
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatVectorProperty
 from bpy.types import Operator
 
-def writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader,blendmode,uvmode,diffuse):
+#code by : brecht - devtalk.blender.org ------------>
+def to_hex(c):
+    if c < 0.0031308:
+        srgb = 0.0 if c < 0.0 else c * 12.92
+    else:
+        srgb = 1.055 * math.pow(c, 1.0 / 2.4) - 0.055
+
+    return hex(max(min(int(srgb * 255 + 0.5), 255), 0))
+
+def toHex(r,g,b):
+    rgb = [r,g,b]
+    result = ""
+    i=0
+    while i < 3:
+        val = str(to_hex(rgb[i]))
+        val = val[2:]
+        if len(val) == 1:
+            val += val
+        result+=val
+        i+=1
+    return result
+# <----------
+
+def writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader,blendmode,uvmode,diffuse,two,at,envmaptex,envmapcolour):
     #Updated from writing to file several times. Write to string instead and write the string to the file at the end :) 
     data = ""
     #data = data = '\n'+str(diffuse.r)
@@ -33,9 +57,9 @@ def writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader,blendm
             <Value Name="Param" Value="CBVB" />
         </Chunk>
         <Chunk Type="0x11003">
-            <!--4. "2SID" (Shader Integer Parameter)-->
-            <Value Name="Value" Value="0" />
-            <Value Name="Param" Value="2SID" />
+            <!--4. "2SID" (Shader Integer Parameter)-->"""
+    data = data + '\n			<Value Name="Value" Value="'+str(two)+'"/>'
+    data = data + """\n			<Value Name="Param" Value="2SID" />
         </Chunk>
         <Chunk Type="0x11003">
             <!--5. "SHMD" (Shader Integer Parameter)-->
@@ -78,9 +102,9 @@ def writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader,blendm
             <Value Name="Param" Value="ACMP" />
         </Chunk>
         <Chunk Type="0x11003">
-            <!--13. "ATST" (Shader Integer Parameter)-->
-            <Value Name="Value" Value="0" />
-            <Value Name="Param" Value="ATST" />
+            <!--13. "ATST" (Shader Integer Parameter)-->"""
+    data = data + '\n			<Value Name="Value" Value="'+str(at)+'"/>'
+    data = data + """\n			<Value Name="Param" Value="ATST" />
         </Chunk>
         <Chunk Type="0x11003">
             <!--14. "MCBV" (Shader Integer Parameter)-->
@@ -129,7 +153,33 @@ def writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader,blendm
         </Chunk>
         <Chunk Type="0x11005">
             <!--23. "DIFF" (Shader Colour Parameter)-->"""
-    data = data + '\n			<Value Name="Value" Red="'+str(round(diffuse.r*255))+'" Green="'+str(round(diffuse.g*255))+'" Blue="'+str(round(diffuse.b*255))+'"/>'
+
+    '''
+    colours suck
+    r = diffuse.r + (1-diffuse.r) / 2
+    r = (r * 255)
+    if r > 255:
+        r = 255
+
+    g = diffuse.g + (1-diffuse.g) / 2
+    g = (g * 255)
+    if g > 255:
+        g = 255
+
+    b = diffuse.b + (1-diffuse.b) / 2
+    b = (b * 255)
+    if b > 255:
+        b = 255
+    '''
+
+    #r = max(min(math.floor((diffuse.r*1.5)*255.999),255),0)
+    #g = max(min(math.floor((diffuse.g*1.5)*255.999),255),0)
+    #b = max(min(math.floor((diffuse.b*1.5)*255.999),255),0)
+
+    a = toHex(diffuse.r,diffuse.g,diffuse.b)
+    rgb = tuple(int(a[i:i+2], 16) for i in (0, 2, 4))
+
+    data = data + '\n			<Value Name="Value" Red="'+str(rgb[0])+'" Green="'+str(rgb[1])+'" Blue="'+str(rgb[2])+'"/>'
     data = data + """\n			<Value Name="Param" Value="DIFF" />
         </Chunk>
         <Chunk Type="0x11005">
@@ -141,8 +191,25 @@ def writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader,blendm
             <!--25. "EMIS" (Shader Colour Parameter)-->
             <Value Name="Value" Red="0" Green="0" Blue="0" />
             <Value Name="Param" Value="EMIS" />
+        </Chunk>"""
+
+    if pddishader == "environment":
+        data = data + """\n        <Chunk Type="0x11002">
+        <!--26. "REFL" (Shader Texture Parameter)-->"""
+        data = data + '\n			<Value Name="Value" Value="'+str(envmaptex)+'"/>'
+        data = data + """\n			<Value Name="Param" Value="REFL" />
+        </Chunk>
+        <Chunk Type="0x11005">
+            <!--27. "ENVB" (Shader Colour Parameter)-->"""
+
+        a = toHex(envmapcolour.r,envmapcolour.g,envmapcolour.b)
+        rgb = tuple(int(a[i:i+2], 16) for i in (0, 2, 4))
+
+        data = data + '\n			<Value Name="Value" Red="'+str(rgb[0])+'" Green="'+str(rgb[1])+'" Blue="'+str(rgb[2])+'"/>'
+        data = data + """\n			<Value Name="Param" Value="ENVB" />
         </Chunk>
     </Chunk>"""
+
     with open(filepath, 'a') as file:
         file.write(data)
     return
@@ -190,7 +257,7 @@ def writetexturep3dxml(texture,image,filepath):
     return
 
 
-def write_shader_data(context, filepath, selected, lighting, filtermode, pddishader, blendmode, uvmode, diffuse):
+def write_shader_data(context, filepath, selected, lighting, filtermode, pddishader, blendmode, uvmode, diffuse, twosided, alphatest, envmaptex, envmapcolour):
     print("Exporting textures & shaders...")
     
     shader = ""
@@ -202,6 +269,18 @@ def write_shader_data(context, filepath, selected, lighting, filtermode, pddisha
         light = 1
     else:
         light = 0
+
+    #twosided
+    if twosided == True:
+        two = 1
+    else:
+        two = 0
+
+    #alphatest
+    if alphatest == True:
+        at = 1
+    else:
+        at = 0
     
     #Let's create the file first
     f = open(filepath, 'w')
@@ -269,7 +348,7 @@ def write_shader_data(context, filepath, selected, lighting, filtermode, pddisha
                                         else:
                                             texture = ""
                                 shadlist.append(shader)
-                                writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader,blendmode,uvmode,diffuse)
+                                writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader,blendmode,uvmode,diffuse,two,at,envmaptex,envmapcolour)
                             
     with open(filepath, 'a') as file:
         file.write("\n</Pure3DFile>")
@@ -390,7 +469,7 @@ class ExportShaderData(Operator, ExportHelper):
     )
 
     def execute(self, context):
-        return write_shader_data(context, self.filepath, self.selected, self.lighting, self.filtermode, self.pddishader, self.blendmode, self.uvmode, self.diffuse)
+        return write_shader_data(context, self.filepath, self.selected, self.lighting, self.filtermode, self.pddishader, self.blendmode, self.uvmode, self.diffuse, self.twosided, self.alphatest, self.envmaptex, self.envmapcolour)
 
 
     def draw(self, context):
@@ -400,6 +479,7 @@ class ExportShaderData(Operator, ExportHelper):
             
         col.prop(self, "pddishader")
         col.prop(self, "diffuse")
+        col.prop(self, "usehex")
         col.prop(self, "blendmode")
         col.prop(self, "filtermode")
         col.prop(self, "uvmode")
