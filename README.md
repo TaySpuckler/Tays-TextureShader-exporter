@@ -14,11 +14,11 @@ It's not been tested on anything lower, so just be keep that in mind if using an
 
 ## Features
 - Mass texture and shader export into a p3dxml file
-- Shader customization on export
-- An option to export both, only texutres or only shaders
+- Shader customisation on export
+- An option to export both, only textures or only shaders
 
 ## To do
-- Individual shader customzation
+- Individual shader customisation
 
 ## Links
 [Blender](https://www.blender.org/)
