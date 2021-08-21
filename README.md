@@ -23,6 +23,6 @@ It's not been tested on anything lower, so just be keep that in mind if using an
 ## Links
 [Blender](https://www.blender.org/)
 
-[Donutteam Forum page](https://donutteam.com/@Tay)
+[Donutteam Forum page](https://donutteam.com/forum/topic/4459)
 
 [My Donutteam profile](https://donutteam.com/@Tay)
