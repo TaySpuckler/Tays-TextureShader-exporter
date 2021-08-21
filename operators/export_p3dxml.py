@@ -209,6 +209,8 @@ def writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader,blendm
         data = data + """\n			<Value Name="Param" Value="ENVB" />
         </Chunk>
     </Chunk>"""
+    else:
+        data = data + '    </Chunk>'
 
     with open(filepath, 'a') as file:
         file.write(data)
@@ -216,6 +218,14 @@ def writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader,blendm
     
 def writetexturep3dxml(texture,image,filepath):
     texture = str(texture)
+
+    #This prevents missing textures (pink) throwing an exception. Instead they'll just be skipped.
+    try:
+        with open(image, "rb") as image_file:
+            b64 = str(base64.b64encode(image_file.read()))
+    except OSError:
+        return
+
     with open(image, "rb") as image_file:
         b64 = str(base64.b64encode(image_file.read()))
     b64 = b64[1:]
@@ -257,8 +267,13 @@ def writetexturep3dxml(texture,image,filepath):
     return
 
 
-def write_shader_data(context, filepath, selected, lighting, filtermode, pddishader, blendmode, uvmode, diffuse, twosided, alphatest, envmaptex, envmapcolour):
-    print("Exporting textures & shaders...")
+def write_shader_data(context, filepath, selected, lighting, filtermode, pddishader, blendmode, uvmode, diffuse, twosided, alphatest, envmaptex, envmapcolour, exporttype):
+    if exporttype == '0':
+        print("Exporting textures & shaders...")
+    elif exporttype == '1':
+        print("Exporting textures...")
+    else:
+        print("Exporting shaders...")
     
     shader = ""
     texture = ""
@@ -297,58 +312,59 @@ def write_shader_data(context, filepath, selected, lighting, filtermode, pddisha
         objs = bpy.data.objects
     
     #Keep track of what textures have been written to the file already
-    texlist = []
-    
-    #Textures go first in the file else shaders won't be able to find their texture.
-    with open(filepath, 'a') as file:
-        for ob in objs:
-            if ob.type == "MESH":
-                for mat_slot in ob.material_slots:
-                    if mat_slot.material:
-                        if mat_slot.material.node_tree:
-                            shader = str(mat_slot.material.name)            
-                            for x in mat_slot.material.node_tree.nodes:
-                                if x.type=='TEX_IMAGE':
-                                    if x.image != None:
-                                        texture = str(x.image.name)  
-                                        
-                                        #So there is no duplicates
-                                        if texture in texlist:
-                                            continue
-                                        else:        
-                                            #image = bpy.path.abspath("//")
-                                            image = bpy.path.abspath("//") + x.image.filepath
-                                            
-                                            #gotta love these file paths
-                                            try:
-                                                with open(image, "rb") as image_file:
-                                                    b64 = str(base64.b64encode(image_file.read()))
-                                            except OSError:
-                                                image = x.image.filepath
-                                            
-                                            texlist.append(texture)
-                                            writetexturep3dxml(texture,image,filepath)
-    shadlist = []    
-    
-    #Shaders
-    with open(filepath, 'a') as file:
-        for ob in objs:
-            if ob.type == "MESH":
-                for mat_slot in ob.material_slots:
-                    if mat_slot.material:
-                        if mat_slot.material.node_tree:
-                            shader = str(mat_slot.material.name)
-                            if shader in shadlist:
-                                continue
-                            else:            
+    if (exporttype == '0') or (exporttype == '1'):
+        texlist = []
+        #Textures go first in the file else shaders won't be able to find their texture.
+        with open(filepath, 'a') as file:
+            for ob in objs:
+                if ob.type == "MESH":
+                    for mat_slot in ob.material_slots:
+                        if mat_slot.material:
+                            if mat_slot.material.node_tree:
+                                shader = str(mat_slot.material.name)            
                                 for x in mat_slot.material.node_tree.nodes:
                                     if x.type=='TEX_IMAGE':
                                         if x.image != None:
                                             texture = str(x.image.name)  
-                                        else:
-                                            texture = ""
-                                shadlist.append(shader)
-                                writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader,blendmode,uvmode,diffuse,two,at,envmaptex,envmapcolour)
+                                        
+                                            #So there is no duplicates
+                                            if texture in texlist:
+                                                continue
+                                            else:        
+                                                #image = bpy.path.abspath("//")
+                                                image = bpy.path.abspath("//") + x.image.filepath
+                                            
+                                                #gotta love these file paths
+                                                try:
+                                                    with open(image, "rb") as image_file:
+                                                        b64 = str(base64.b64encode(image_file.read()))
+                                                except OSError:
+                                                    image = x.image.filepath
+                                            
+                                                texlist.append(texture)
+                                                writetexturep3dxml(texture,image,filepath)
+
+    if (exporttype == '0') or (exporttype == '2'):
+        shadlist = []    
+        #Shaders
+        with open(filepath, 'a') as file:
+            for ob in objs:
+                if ob.type == "MESH":
+                    for mat_slot in ob.material_slots:
+                        if mat_slot.material:
+                            if mat_slot.material.node_tree:
+                                shader = str(mat_slot.material.name)
+                                if shader in shadlist:
+                                    continue
+                                else:            
+                                    for x in mat_slot.material.node_tree.nodes:
+                                        if x.type=='TEX_IMAGE':
+                                            if x.image != None:
+                                                texture = str(x.image.name)  
+                                            else:
+                                                texture = ""
+                                    shadlist.append(shader)
+                                    writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader,blendmode,uvmode,diffuse,two,at,envmaptex,envmapcolour)
                             
     with open(filepath, 'a') as file:
         file.write("\n</Pure3DFile>")
@@ -407,7 +423,7 @@ class ExportShaderData(Operator, ExportHelper):
             ('1', 'Alpha', ''),
             ('2', 'Additive', ''),
             ('3', 'Subtractive', '')),
-        default = '1'
+        default = '0'
     )
     
     filtermode: EnumProperty(
@@ -461,7 +477,17 @@ class ExportShaderData(Operator, ExportHelper):
         description="Two Sided test option in the p3d editor.",
         default=False,
     )
-    
+
+    exporttype: EnumProperty(
+    name = 'Export',
+    description = 'Choose what to export',
+    items = (
+            ('0', 'Textures and shaders', ''),
+            ('1', 'Only textures', ''),
+            ('2', 'Only shaders', '')),
+        default = '0'
+    )
+
     selected: BoolProperty(
         name="Selected only",
         description="Export the textures and shaders of the selected objects only.",
@@ -469,7 +495,7 @@ class ExportShaderData(Operator, ExportHelper):
     )
 
     def execute(self, context):
-        return write_shader_data(context, self.filepath, self.selected, self.lighting, self.filtermode, self.pddishader, self.blendmode, self.uvmode, self.diffuse, self.twosided, self.alphatest, self.envmaptex, self.envmapcolour)
+        return write_shader_data(context, self.filepath, self.selected, self.lighting, self.filtermode, self.pddishader, self.blendmode, self.uvmode, self.diffuse, self.twosided, self.alphatest, self.envmaptex, self.envmapcolour, self.exporttype)
 
 
     def draw(self, context):
@@ -493,9 +519,16 @@ class ExportShaderData(Operator, ExportHelper):
         col.prop(self, "lighting")
         col.prop(self, "alphatest")
         col.prop(self, "twosided")
-        col.prop(self, "selected")
+
+        layout.prop(self, "exporttype")
+        layout.prop(self, "selected")
 
         if self.pddishader == "environment":
             envmapbox.enabled = True
         else:
             envmapbox.enabled = False
+
+        if self.exporttype == "1":
+            box.enabled = False
+        else:
+            box.enabled = True
