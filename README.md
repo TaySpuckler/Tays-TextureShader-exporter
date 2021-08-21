@@ -4,9 +4,13 @@
 
 A blender addon which exports textures and shaders into a p3xml file, which can be imported into the P3D editor!
 
-**Requires Blender version 2.93.x**
+## Supported Blender versions
+- 2.93.x - Created with and heavily tested in. **Recommended you use!**
+- 2.92.x - lightly tested
+- 2.91.x - lightly tested
 
-I say requires. It's not been tested on anything lower. So just be keep that in mind if using an older version
+
+It's not been tested on anything lower, so just be keep that in mind if using an older version.
 
 ## Features
 - Mass texture and shader export into a p3dxml file
