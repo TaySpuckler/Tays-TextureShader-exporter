@@ -9,9 +9,9 @@ from .operators.export_p3dxml import ExportShaderData
 bl_info = {
     "name": "Tay's P3DXML texture & Shader Exporter",
     "author": "Tay",
-    "version": (1, 0, 0),
+    "version": (1, 0, 1),
     "blender": (2, 93, 1),
-    "wiki_url": "https://github.com/Tayerf/textureshader-exporter",
+    "wiki_url": "https://github.com/Tayerf/Tays-TextureShader-exporter",
     "support": "COMMUNITY",
     "location": "File > Export",
     "category": "Import-Export",

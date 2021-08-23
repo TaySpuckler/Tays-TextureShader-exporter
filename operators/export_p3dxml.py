@@ -154,28 +154,6 @@ def writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader,blendm
         <Chunk Type="0x11005">
             <!--23. "DIFF" (Shader Colour Parameter)-->"""
 
-    '''
-    colours suck
-    r = diffuse.r + (1-diffuse.r) / 2
-    r = (r * 255)
-    if r > 255:
-        r = 255
-
-    g = diffuse.g + (1-diffuse.g) / 2
-    g = (g * 255)
-    if g > 255:
-        g = 255
-
-    b = diffuse.b + (1-diffuse.b) / 2
-    b = (b * 255)
-    if b > 255:
-        b = 255
-    '''
-
-    #r = max(min(math.floor((diffuse.r*1.5)*255.999),255),0)
-    #g = max(min(math.floor((diffuse.g*1.5)*255.999),255),0)
-    #b = max(min(math.floor((diffuse.b*1.5)*255.999),255),0)
-
     a = toHex(diffuse.r,diffuse.g,diffuse.b)
     rgb = tuple(int(a[i:i+2], 16) for i in (0, 2, 4))
 
@@ -523,7 +501,7 @@ class ExportShaderData(Operator, ExportHelper):
         layout.prop(self, "exporttype")
         layout.prop(self, "selected")
 
-        if self.pddishader == "environment":
+        if (self.pddishader == "environment") or (self.pddishader == "spheremap"):
             envmapbox.enabled = True
         else:
             envmapbox.enabled = False
