@@ -193,7 +193,7 @@ def writeshaderp3dxml(shader,texture,filepath,light,filtermode,pddishader,blendm
             <Value Name="Param" Value="EMIS" />
         </Chunk>"""
 
-    if pddishader == "environment":
+    if (pddishader == "environment") or (pddishader == "spheremap"):
         data = data + """\n        <Chunk Type="0x11002">
         <!--26. "REFL" (Shader Texture Parameter)-->"""
         data = data + '\n			<Value Name="Value" Value="'+str(envmaptex)+'"/>'
