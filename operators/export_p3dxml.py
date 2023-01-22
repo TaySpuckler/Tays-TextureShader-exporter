@@ -223,7 +223,7 @@ def writetexturep3dxml(texture,image,filepath):
     data = data + '\n    <Chunk Type="0x19000">\n        <Value Name="Name" Value="'+texture+'" />\n		<Value Name="Version" Value="14000" />'
     data = data + '\n        <Value Name="Width" Value="'+str(width)+'" />\n        <Value Name="Height" Value="'+str(height)+'" />'
     data = data + """\n		<Value Name="Bpp" Value="8" />
-        <Value Name="AlphaDepth" Value="0" />
+        <Value Name="AlphaDepth" Value="1" />
         <Value Name="TextureType" Value="1" />
         <Value Name="Usage" Value="0" />
         <Value Name="Priority" Value="0" />
