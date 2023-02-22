@@ -1,6 +1,7 @@
 import bpy
 import base64
 import math
+import os
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatVectorProperty
 from bpy.types import Operator
@@ -310,7 +311,7 @@ def write_shader_data(context, filepath, selected, lighting, filtermode, pddisha
                                                 continue
                                             else:        
                                                 #image = bpy.path.abspath("//")
-                                                image = bpy.path.abspath("//") + x.image.filepath
+                                                image = os.path.realpath(bpy.path.abspath(x.image.filepath))
                                             
                                                 #gotta love these file paths
                                                 try:
