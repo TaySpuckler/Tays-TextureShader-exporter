@@ -4,8 +4,8 @@
 
 A blender addon which exports textures and shaders into a p3xml file, which can be imported into the P3D editor!
 
-Check out the [Wiki](../../wiki) 
-Step by step guide with images.
+Check out the [Wiki](../../wiki).
+It has a step by step guide with images.
 
 ## Tested with
 - 3.2.1
